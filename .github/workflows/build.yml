@@ -11,7 +11,7 @@ on:
 jobs:
   build-windows:
     name: Windows x64 (VST3 + Standalone)
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout Repository
