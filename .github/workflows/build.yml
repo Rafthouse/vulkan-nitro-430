@@ -1,4 +1,4 @@
-name: Build VST3 & AU (Windows + macOS)
+name: Build VST3 & AU + Installers (Windows + macOS)
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-windows:
-    name: Windows x64 (VST3 + Standalone)
+    name: Windows x64 (VST3 + Standalone + Installer)
     runs-on: windows-2022
 
     steps:
@@ -23,6 +23,18 @@ jobs:
       - name: Build VST3 & Standalone
         run: cmake --build build --config Release --parallel
 
+      - name: Package Windows Installer (Inno Setup)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-windows | Out-Null
+          $is = Join-Path $env:TEMP 'innosetup.exe'
+          Invoke-WebRequest -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $is
+          Start-Process -FilePath $is -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' -Wait
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install" }
+          & $iscc installer\nitro430.iss
+          Get-ChildItem dist-windows
+
       - name: Upload Windows VST3 & Standalone Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -31,8 +43,15 @@ jobs:
             build/VulkanNitro430_artefacts/Release/VST3/**
             build/VulkanNitro430_artefacts/Release/Standalone/**
 
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: VulkanAudio-NITRO-430-Windows-Setup
+          path: dist-windows/*
+          if-no-files-found: error
+
   build-macos:
-    name: macOS Universal (VST3 + AU + Standalone)
+    name: macOS Universal (VST3 + AU + Standalone + Installer)
     runs-on: macos-latest
 
     steps:
@@ -50,6 +69,25 @@ jobs:
           codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3"
           codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component"
 
+      - name: Package macOS Installer (.pkg)
+        run: |
+          mkdir -p dist-macos
+          mkdir -p pkgroot/Library/Audio/Plug-Ins/VST3
+          mkdir -p pkgroot/Library/Audio/Plug-Ins/Components
+          cp -R "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3" pkgroot/Library/Audio/Plug-Ins/VST3/
+          cp -R "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component" pkgroot/Library/Audio/Plug-Ins/Components/
+          pkgbuild --root pkgroot             --identifier com.vulkanaudio.nitro430             --version 1.0.0             --install-location /             dist-macos/VulkanAudio-NITRO-430-macOS-Universal2.pkg
+
+      - name: Build macOS Disk Image (.dmg)
+        run: |
+          brew install create-dmg
+          mkdir -p dmg-staging
+          cp -R "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3" dmg-staging/
+          cp -R "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component" dmg-staging/
+          cp -R "build/VulkanNitro430_artefacts/Release/Standalone/Vulkan Audio NITRO-430.app" dmg-staging/
+          create-dmg             --volname "Vulkan Audio NITRO-430"             --window-size 520 340             --icon-size 110             --app-drop-link 400 120             dist-macos/VulkanAudio-NITRO-430-macOS-Universal2.dmg             dmg-staging || true
+          ls -la dist-macos
+
       - name: Upload macOS VST3 & AU Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,3 +96,10 @@ jobs:
             build/VulkanNitro430_artefacts/Release/VST3/**
             build/VulkanNitro430_artefacts/Release/AU/**
             build/VulkanNitro430_artefacts/Release/Standalone/**
+
+      - name: Upload macOS Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: VulkanAudio-NITRO-430-macOS-Installer
+          path: dist-macos/*
+          if-no-files-found: error
