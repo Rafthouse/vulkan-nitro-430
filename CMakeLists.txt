@@ -19,7 +19,7 @@ endif()
 # Customize Brand, Model & Author Name at compile time if desired:
 set(PLUGIN_BRAND_TITLE "VULKAN AUDIO" CACHE STRING "Displayed Brand Name on Faceplate")
 set(PLUGIN_MODEL_TITLE "NITRO-430"    CACHE STRING "Displayed Model Name on Faceplate")
-set(PLUGIN_AUTHOR_NAME "Chief DSP Creator" CACHE STRING "Author Name in About Window")
+set(PLUGIN_AUTHOR_NAME "Mykyta Shchur" CACHE STRING "Author Name in About Window")
 
 # Automatically download JUCE 8.0.4 via CMake FetchContent (no manual SDK install needed)
 include(FetchContent)

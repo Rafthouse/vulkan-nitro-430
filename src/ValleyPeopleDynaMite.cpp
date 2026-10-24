@@ -36,7 +36,7 @@
   #define PLUGIN_FULL_NAME    "Vulkan Audio NITRO-430"
 #endif
 #ifndef PLUGIN_AUTHOR_NAME
-  #define PLUGIN_AUTHOR_NAME  "Chief DSP Creator"
+  #define PLUGIN_AUTHOR_NAME  "Mykyta Shchur"
 #endif
 #ifndef PLUGIN_VERSION_STR
   #define PLUGIN_VERSION_STR  "v1.0.0 (VST3 / AU / Standalone)"
