@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VULKAN AUDIO NITRO-430 — Compact VCA Dynamics Processor</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+    :root {
+      --rack-bg-top: #23252b;
+      --rack-bg-bot: #121317;
+      --gold-border: #a68b5b;
+      --gold-dim: #635235;
+      --cream-text: #efe1c1;
+      --dynamite-red: #e04f3e;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0c0f;
+      color: #efe1c1;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    .rack-chassis {
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.012) 0px,
+          rgba(255, 255, 255, 0.012) 1px,
+          transparent 1px,
+          transparent 3px
+        ),
+        linear-gradient(180deg, #24272e 0%, #17191e 52%, #101216 100%);
+      box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.8);
+    }
+
+    .gold-frame {
+      border: 1.5px solid #9e8456;
+      box-shadow:
+        inset 0 0 0 2px #181a1f,
+        inset 0 0 0 3px #59492f;
+    }
+
+    .recessed-bezel {
+      background: linear-gradient(180deg, #090a0c 0%, #111318 100%);
+      border: 1px solid #59492f;
+      box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.95),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .knob-canvas {
+      cursor: ns-resize;
+      touch-action: none;
+    }
+
+    .switch-slot {
+      background: linear-gradient(90deg, #07080a 0%, #12141a 50%, #07080a 100%);
+      border: 1.5px solid #6b5a3e;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.95);
+    }
+
+    .switch-actuator {
+      background: linear-gradient(180deg, #525763 0%, #262930 50%, #17191d 100%);
+      border: 1px solid #949ba8;
+      box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: top 0.11s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .hw-push-btn {
+      background: linear-gradient(180deg, #2d3038 0%, #191b20 100%);
+      border: 1px solid #5c503a;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
+      transition: all 0.12s ease;
+    }
+
+    .hw-push-btn.active {
+      background: linear-gradient(180deg, #e07b24 0%, #b84a14 100%);
+      border-color: #ffd285;
+      color: #fff8eb;
+      box-shadow:
+        0 0 10px rgba(240, 140, 40, 0.55),
+        inset 0 1px 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .led-segment {
+      transition: background-color 0.04s ease, box-shadow 0.04s ease, opacity 0.04s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-start items-center p-2 md:p-3">
+
+  <!-- COMPACT TOP STUDIO BAR & BRAND CUSTOMIZER -->
+  <header class="max-w-[840px] w-full mb-2 bg-[#14161b] border border-[#332c22] rounded-lg px-2.5 py-2 shadow-lg">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <!-- Transport & Audio Loop -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="playStopBtn" type="button"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded font-bold text-[11px] tracking-wide bg-emerald-600 hover:bg-emerald-500 text-white shadow transition">
+          <span id="playIcon">▶</span>
+          <span id="playBtnText">PLAY TEST AUDIO</span>
+        </button>
+
+        <div class="flex items-center gap-1 bg-[#0c0d10] border border-[#3a3225] rounded px-2 py-1">
+          <label for="sourceLoopSelect" class="text-[10px] font-semibold text-[#b8a88a] uppercase">Loop:</label>
+          <select id="sourceLoopSelect" class="bg-transparent text-[11px] font-semibold text-[#efe1c1] focus:outline-none cursor-pointer">
+            <option value="drums">🥁 Drum Bus</option>
+            <option value="snare_tom">🥁 Snare &amp; Tom</option>
+            <option value="bass">🎸 Slap Bass</option>
+            <option value="vocal_deess">🎤 Vocal Sibilance</option>
+            <option value="synth_sidechain">🎹 Synth + Kick S/C</option>
+          </select>
+        </div>
+
+        <button id="abBypassBtn" type="button"
+          class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-[#59492f] bg-[#1c1f26] text-[#d6c6a5] hover:border-[#b89b67] transition">
+          A/B: ACTIVE
+        </button>
+      </div>
+
+      <!-- Mode Skin Tabs & Presets -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <div class="inline-flex rounded p-0.5 bg-[#0c0d10] border border-[#3a3225]">
+          <button type="button" data-skin="original" class="skin-tab-btn px-2 py-0.5 rounded text-[10px] font-bold bg-[#9e8456] text-[#0c0d10] transition">
+            ORIGINAL (18-Mode)
+          </button>
+          <button type="button" data-skin="slam" class="skin-tab-btn px-2 py-0.5 rounded text-[10px] font-bold text-[#c2b293] hover:text-white transition">
+            SLAM (Limiter)
+          </button>
+          <button type="button" data-skin="gate" class="skin-tab-btn px-2 py-0.5 rounded text-[10px] font-bold text-[#c2b293] hover:text-white transition">
+            GATE (Expander)
+          </button>
+        </div>
+
+        <select id="presetSelect" aria-label="Preset" class="bg-[#0c0d10] border border-[#3a3225] rounded px-2 py-1 text-[11px] font-semibold text-[#f3c66f] focus:outline-none cursor-pointer">
+          <option value="0">1. Default Limiter</option>
+          <option value="1">2. Drum Bus Slam</option>
+          <option value="2">3. Snare 3-Zone Crack</option>
+          <option value="3">4. Fast Tom Gate</option>
+          <option value="4">5. Vocal De-Esser</option>
+          <option value="5">6. Weird Organ (-20:1)</option>
+          <option value="6">7. Output Overdrive</option>
+          <option value="7">8. Synth Keying (EXT)</option>
+          <option value="8">9. Pad Ducking (EXT)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Compact Rebranding Bar (Live Custom Brand, Model & Author) -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-[#242019] text-[10px]">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-bold uppercase tracking-wider text-[#a8987a]">Panel Rebrand:</span>
+        <label class="flex items-center gap-1 bg-[#0c0d10] border border-[#332c22] rounded px-1.5 py-0.5">
+          <span class="text-[#8c7e65]">Brand:</span>
+          <input id="brandNameInput" type="text" value="VULKAN AUDIO" maxlength="18"
+            class="w-24 bg-transparent font-bold text-[#efe1c1] focus:outline-none uppercase" />
+        </label>
+        <label class="flex items-center gap-1 bg-[#0c0d10] border border-[#332c22] rounded px-1.5 py-0.5">
+          <span class="text-[#8c7e65]">Model:</span>
+          <input id="modelNameInput" type="text" value="NITRO-430" maxlength="14"
+            class="w-20 bg-transparent font-bold text-[#f59e0b] focus:outline-none uppercase" />
+        </label>
+        <label class="flex items-center gap-1 bg-[#0c0d10] border border-[#332c22] rounded px-1.5 py-0.5">
+          <span class="text-[#8c7e65]">Author:</span>
+          <input id="authorNameInput" type="text" value="My Custom Audio Lab" maxlength="26"
+            class="w-28 bg-transparent font-bold text-emerald-400 focus:outline-none" />
+        </label>
+      </div>
+      <button id="toggleScopeBtn" type="button"
+        class="px-2 py-0.5 rounded bg-[#1c1f26] border border-[#473c2a] text-[#d4c3a1] hover:text-white font-semibold transition">
+        📊 Analyzer: HIDE / SHOW
+      </button>
+    </div>
+  </header>
+
+  <!-- COMPACT 500-SERIES / HALF-RACK PLUGIN CHASSIS (840px max width so all 5 knobs fit cleanly) -->
+  <main class="max-w-[840px] w-full flex flex-col gap-2">
+
+    <section class="rack-chassis rounded-xl relative overflow-hidden border border-[#383b44] flex">
+
+      <!-- SLIM LEFT RACK EAR -->
+      <div class="w-6 bg-[#121317] border-r border-[#2d3039] flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="w-3.5 h-3 rounded-full bg-[#060708] border border-[#4a4e58] shadow-inner"></div>
+        <div class="text-[8px] font-bold tracking-widest text-[#5e523e] -rotate-90 whitespace-nowrap">TA-101</div>
+        <div class="w-3.5 h-3 rounded-full bg-[#060708] border border-[#4a4e58] shadow-inner"></div>
+      </div>
+
+      <!-- COMPACT FACEPLATE INTERIOR -->
+      <div class="flex-1 p-2 md:p-2.5 relative">
+        <div class="gold-frame rounded-md p-2.5 flex flex-col gap-2">
+
+          <!-- COMPACT HEADER BAR + INTEGRATED LED METERS -->
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#3a3122] pb-2">
+            <!-- Clickable Rebranded Emblem (Click opens About Modal) -->
+            <div id="titleBrandBtn" class="flex flex-col leading-tight cursor-pointer hover:opacity-90 transition" title="Click for About &amp; Author Info">
+              <div class="flex items-baseline gap-1.5">
+                <span id="brandNameDisplay" class="text-base md:text-lg font-extrabold tracking-wider text-[#efe1c1]">VULKAN AUDIO</span>
+                <span id="modelNameDisplay" class="text-base md:text-lg font-black tracking-wider text-[#f59e0b]">NITRO-430</span>
+                <span id="skinBadgeLabel" class="ml-1 px-1.5 py-0.2 text-[9px] font-bold uppercase rounded bg-[#2b2419] text-[#e5c07b] border border-[#6e5b3b]">
+                  CORE 18
+                </span>
+              </div>
+              <span id="skinSubtitle" class="text-[9.5px] text-[#9e8e70] tracking-wide">
+                VCA Dynamics Processor • Linear Integration &amp; ARC
+              </span>
+            </div>
+
+            <!-- Compact Recessed Meters Strip -->
+            <div class="flex items-center gap-1.5">
+              <!-- 8-Segment Gain Reduction Meter -->
+              <div class="recessed-bezel rounded px-2 py-1 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between text-[8.5px] font-bold tracking-wider text-[#b8a88a] gap-2">
+                  <span>GAIN REDUCTION</span>
+                  <span id="grNumericReadout" class="mono text-[#f0b429]">0.0 dB</span>
+                </div>
+                <div id="grLedContainer" class="flex items-center gap-1"></div>
+              </div>
+
+              <!-- 6-Segment Output Level Meter -->
+              <div class="recessed-bezel rounded px-2 py-1 flex flex-col gap-0.5">
+                <div class="flex items-center justify-between text-[8.5px] font-bold tracking-wider text-[#b8a88a] gap-2">
+                  <span>OUTPUT</span>
+                  <span id="outNumericReadout" class="mono text-emerald-400">-∞ dB</span>
+                </div>
+                <div id="outLedContainer" class="flex items-center gap-1"></div>
+              </div>
+
+              <!-- Compact CLIP Indicator -->
+              <div id="clipBezel" class="recessed-bezel rounded px-2 py-1 flex flex-col items-center justify-center cursor-pointer" title="Click to reset CLIP">
+                <span class="text-[8.5px] font-bold tracking-wider text-[#b8a88a]">CLIP</span>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <div id="clipLedCircle" class="w-3 h-3 rounded-full bg-[#3d1210] border border-[#6e221f] transition-all"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SINGLE COMPACT HORIZONTAL CONTROL STRIP:
+               Symmetric 12-column grid where Left Knobs = 4 cols, Switches = 2 cols, Right Knobs = 4 cols, Mix = 2 cols (4+2+4+2 = 12!) -->
+          <div class="grid grid-cols-2 sm:grid-cols-12 gap-2 items-stretch py-0.5">
+
+            <!-- LEFT KNOBS: THRESHOLD & RELEASE (sm:col-span-4) -->
+            <div class="col-span-2 sm:col-span-4 flex items-center justify-around bg-[#14161b]/60 rounded py-1.5 px-2 border border-[#2c261c]">
+              <div class="flex flex-col items-center">
+                <span id="knobThresholdTitle" class="text-[10px] font-bold tracking-wider text-[#efe1c1]">THRESHOLD</span>
+                <canvas id="knobThreshold" width="96" height="96" class="knob-canvas"></canvas>
+                <div class="flex items-center justify-center bg-[#0b0c0e] border border-[#473c2a] rounded px-1.5 py-0.5">
+                  <input id="inputThresholdVal" type="number" step="0.5" min="-40" max="20" value="0.0"
+                    class="w-11 bg-transparent text-center mono text-[10px] font-bold text-[#f3d79b] focus:outline-none" />
+                  <span id="unitThreshold" class="text-[8.5px] text-[#9e8e70]">dB</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center">
+                <span class="text-[10px] font-bold tracking-wider text-[#efe1c1]">RELEASE</span>
+                <canvas id="knobRelease" width="96" height="96" class="knob-canvas"></canvas>
+                <div class="flex items-center justify-center bg-[#0b0c0e] border border-[#473c2a] rounded px-1.5 py-0.5">
+                  <input id="inputReleaseVal" type="number" step="0.01" min="0.05" max="5.0" value="0.25"
+                    class="w-11 bg-transparent text-center mono text-[10px] font-bold text-[#f3d79b] focus:outline-none" />
+                  <span class="text-[8.5px] text-[#9e8e70]">s</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CENTER: COMPACT 3-WAY SWITCHES OR SLAM/GATE BUTTONS (sm:col-span-2) -->
+            <div class="col-span-2 sm:col-span-2 flex flex-col items-center justify-center bg-[#14161b]/80 rounded py-1.5 px-1 border border-[#382f21] min-h-[132px]">
+
+              <!-- VIEW A: COMPACT 3-WAY ROCKER SWITCHES -->
+              <div id="originalSwitchesPanel" class="w-full flex items-center justify-around">
+                <!-- DET SOURCE -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[8px] font-bold tracking-wider text-[#d4c3a1] mb-1">SOURCE</span>
+                  <div class="flex items-center gap-0.5">
+                    <div id="swDetSource" class="switch-slot w-3.5 h-20 rounded relative cursor-pointer">
+                      <div id="thumbDetSource" class="switch-actuator w-3 h-6 rounded-sm absolute left-[1px] top-0.5 flex items-center justify-center">
+                        <div class="w-2 h-0.5 bg-[#f7e7c4]"></div>
+                      </div>
+                    </div>
+                    <div class="flex flex-col justify-between h-20 py-1 text-[9px] font-bold">
+                      <button type="button" data-sw="detSource" data-pos="0" class="sw-label text-left">int</button>
+                      <button type="button" data-sw="detSource" data-pos="1" class="sw-label text-left">ds</button>
+                      <button type="button" data-sw="detSource" data-pos="2" class="sw-label text-left">ext</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- MODE -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[8px] font-bold tracking-wider text-[#d4c3a1] mb-1">MODE</span>
+                  <div class="flex items-center gap-0.5">
+                    <div id="swMode" class="switch-slot w-3.5 h-20 rounded relative cursor-pointer">
+                      <div id="thumbMode" class="switch-actuator w-3 h-6 rounded-sm absolute left-[1px] top-0.5 flex items-center justify-center">
+                        <div class="w-2 h-0.5 bg-[#f7e7c4]"></div>
+                      </div>
+                    </div>
+                    <div class="flex flex-col justify-between h-20 py-1 text-[9px] font-bold">
+                      <button type="button" data-sw="mode" data-pos="0" class="sw-label text-left">exp</button>
+                      <button type="button" data-sw="mode" data-pos="1" class="sw-label text-left">out</button>
+                      <button type="button" data-sw="mode" data-pos="2" class="sw-label text-left">lim</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DETECTOR -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[8px] font-bold tracking-wider text-[#d4c3a1] mb-1">DETECT</span>
+                  <div class="flex items-center gap-0.5">
+                    <div id="swDetType" class="switch-slot w-3.5 h-20 rounded relative cursor-pointer">
+                      <div id="thumbDetType" class="switch-actuator w-3 h-6 rounded-sm absolute left-[1px] top-0.5 flex items-center justify-center">
+                        <div class="w-2 h-0.5 bg-[#f7e7c4]"></div>
+                      </div>
+                    </div>
+                    <div class="flex flex-col justify-between h-20 py-1 text-[9px] font-bold">
+                      <button type="button" data-sw="detType" data-pos="0" class="sw-label text-left">gate</button>
+                      <button type="button" data-sw="detType" data-pos="1" class="sw-label text-left">pk</button>
+                      <button type="button" data-sw="detType" data-pos="2" class="sw-label text-left">avg</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VIEW B: SLAM / GATE PUSH-BUTTON BANK -->
+              <div id="slamGateButtonsPanel" class="hidden w-full flex-col gap-1.5">
+                <div class="text-[8.5px] font-bold uppercase tracking-wider text-center text-[#c7b695]" id="slamGateSubheader">
+                  SLAM DETECTOR
+                </div>
+                <div id="slamAttackButtons" class="grid grid-cols-2 gap-1">
+                  <button type="button" id="btnSlamFast" class="hw-push-btn py-1 px-1 rounded text-[9px] font-bold">
+                    FAST
+                  </button>
+                  <button type="button" id="btnSlamSlow" class="hw-push-btn py-1 px-1 rounded text-[9px] font-bold">
+                    SLOW
+                  </button>
+                </div>
+                <div id="gateRatioButtons" class="hidden grid-cols-3 gap-0.5">
+                  <button type="button" id="btnGateHard" class="hw-push-btn py-1 px-0.5 rounded text-[8px] font-bold">
+                    1:20
+                  </button>
+                  <button type="button" id="btnGateFastExp" class="hw-push-btn py-1 px-0.5 rounded text-[8px] font-bold">
+                    F 1:2
+                  </button>
+                  <button type="button" id="btnGateSlowExp" class="hw-push-btn py-1 px-0.5 rounded text-[8px] font-bold">
+                    S 1:2
+                  </button>
+                </div>
+                <div class="grid grid-cols-2 gap-1 pt-0.5">
+                  <button type="button" id="btnHfBoost" class="hw-push-btn py-1 px-1 rounded text-[8.5px] font-bold">
+                    DS-FM
+                  </button>
+                  <button type="button" id="btnExtSc" class="hw-push-btn py-1 px-1 rounded text-[8.5px] font-bold">
+                    EXT
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT KNOBS: RANGE & OUTPUT (sm:col-span-4 — IDENTICAL 4-column width to Left Knobs so they never touch!) -->
+            <div class="col-span-1 sm:col-span-4 flex items-center justify-around bg-[#14161b]/60 rounded py-1.5 px-2 border border-[#2c261c]">
+              <div id="rangeKnobWrapper" class="flex flex-col items-center">
+                <span class="text-[10px] font-bold tracking-wider text-[#efe1c1]">RANGE</span>
+                <canvas id="knobRange" width="96" height="96" class="knob-canvas"></canvas>
+                <div class="flex items-center justify-center bg-[#0b0c0e] border border-[#473c2a] rounded px-1.5 py-0.5">
+                  <input id="inputRangeVal" type="number" step="1" min="0" max="60" value="60.0"
+                    class="w-11 bg-transparent text-center mono text-[10px] font-bold text-[#f3d79b] focus:outline-none" />
+                  <span class="text-[8.5px] text-[#9e8e70]">dB</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center">
+                <span class="text-[10px] font-bold tracking-wider text-[#efe1c1]">OUTPUT</span>
+                <canvas id="knobOutput" width="96" height="96" class="knob-canvas"></canvas>
+                <div class="flex items-center justify-center bg-[#0b0c0e] border border-[#473c2a] rounded px-1.5 py-0.5">
+                  <input id="inputOutputVal" type="number" step="0.5" min="-15" max="15" value="0.0"
+                    class="w-11 bg-transparent text-center mono text-[10px] font-bold text-[#f3d79b] focus:outline-none" />
+                  <span class="text-[8.5px] text-[#9e8e70]">dB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- COMPACT MIX & STEREO LINK MODULE (sm:col-span-2) -->
+            <div class="col-span-1 sm:col-span-2 flex flex-col items-center justify-between bg-[#101216] rounded py-1.5 px-1.5 border border-[#473c2a]">
+              <span class="text-[9px] font-extrabold tracking-wider text-[#d4b06a] uppercase">DRY / WET</span>
+              <canvas id="knobMix" width="84" height="84" class="knob-canvas"></canvas>
+              <div class="flex items-center justify-center bg-[#0b0c0e] border border-[#473c2a] rounded px-1 py-0.5">
+                <input id="inputMixVal" type="number" step="1" min="0" max="100" value="100.0"
+                  class="w-10 bg-transparent text-center mono text-[10px] font-bold text-[#f3d79b] focus:outline-none" />
+                <span class="text-[8.5px] text-[#9e8e70]">%</span>
+              </div>
+              <button id="stereoCoupleBtn" type="button"
+                class="mt-1 w-full py-0.5 px-1 rounded text-[8.5px] font-bold tracking-wider uppercase bg-[#2b2418] text-[#f3c66f] border border-[#8a7147] truncate">
+                🔗 STEREO LINK
+              </button>
+            </div>
+
+          </div>
+
+          <!-- SLIM SINGLE-LINE LCD MODE DISPLAY -->
+          <div class="recessed-bezel rounded px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-[#f59e0b] text-[#0c0d10] shrink-0">
+                MODE
+              </span>
+              <p id="interactiveGuideText" class="text-[11px] font-medium text-[#f5d796] truncate">
+                LEVEL LIMITING (INT / LIMIT / AVG): Inf:1 ratio with Linear Integration Detection (1-15 ms attack) &amp; Auto Make-Up.
+              </p>
+            </div>
+            <div class="flex items-center gap-2.5 shrink-0 text-[10px] mono text-[#b8a88a]">
+              <span>MAKE-UP: <strong id="autoMakeupReadout" class="text-emerald-400">+13.0 dB</strong></span>
+              <span>RATIO: <strong id="activeRatioReadout" class="text-[#f3c66f]">Inf : 1</strong></span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ABOUT / AUTHOR MODAL OVERLAY (Triggered by clicking VULKAN AUDIO NITRO-430 title) -->
+        <div id="aboutModalOverlay" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+          <div class="bg-[#16181e] border-2 border-[#a68b5b] rounded-xl max-w-sm w-full p-4 shadow-2xl flex flex-col gap-2.5 text-center">
+            <div class="text-[9.5px] font-extrabold uppercase tracking-widest text-[#f59e0b]">
+              ABOUT THIS PLUGIN
+            </div>
+            <h2 class="text-xl font-black tracking-wider text-[#efe1c1]">
+              <span id="aboutBrandTitle">VULKAN AUDIO</span>
+              <span id="aboutModelTitle" class="text-[#f59e0b]">NITRO-430</span>
+            </h2>
+            <p class="text-[11px] text-[#b8a88a] leading-relaxed">
+              64-bit TA-101 VCA Dynamics Processor • Linear Integration Detection &amp; Anticipatory Release Computation (ARC).
+            </p>
+            <div class="recessed-bezel rounded-lg p-2.5 flex flex-col gap-0.5">
+              <span class="text-[9px] uppercase tracking-wider text-[#9e8e70] font-bold">Created &amp; Engineered By</span>
+              <span id="aboutAuthorDisplay" class="text-sm font-extrabold text-emerald-400 tracking-wide">
+                My Custom Audio Lab
+              </span>
+              <span class="text-[9.5px] mono text-[#8c7e65]">
+                Version 1.0.0 • VST3 / AU / Standalone
+              </span>
+            </div>
+            <div class="flex justify-center pt-1">
+              <button id="closeAboutModalBtn" type="button"
+                class="px-4 py-1 rounded text-[11px] font-bold uppercase tracking-wider bg-[#9e8456] hover:bg-[#b89b67] text-[#0c0d10] transition">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SLIM RIGHT RACK EAR -->
+      <div class="w-6 bg-[#121317] border-l border-[#2d3039] flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="w-3.5 h-3 rounded-full bg-[#060708] border border-[#4a4e58] shadow-inner"></div>
+        <div class="text-[8px] font-bold tracking-widest text-[#5e523e] rotate-90 whitespace-nowrap">N-430</div>
+        <div class="w-3.5 h-3 rounded-full bg-[#060708] border border-[#4a4e58] shadow-inner"></div>
+      </div>
+
+    </section>
+
+    <!-- COMPACT COLLAPSIBLE ANALYZER DRAWER -->
+    <section id="analyzerSection" class="grid grid-cols-1 md:grid-cols-12 gap-2">
+      <div class="md:col-span-5 bg-[#13151a] border border-[#2f291f] rounded-lg p-2 flex flex-col gap-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-[#d4c3a1]">
+            3-Zone Transfer Curve
+          </span>
+          <span id="zoneStatusBadge" class="text-[9.5px] mono font-bold px-1.5 py-0.2 rounded bg-[#1f242d] text-emerald-400">
+            ZONE 1: LINEAR
+          </span>
+        </div>
+        <div class="relative h-28 w-full bg-[#090a0d] rounded border border-[#26221b] overflow-hidden">
+          <canvas id="transferCurveCanvas" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+
+      <div class="md:col-span-7 bg-[#13151a] border border-[#2f291f] rounded-lg p-2 flex flex-col gap-1">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-[#d4c3a1]">
+            Oscilloscope (In / Out / GR)
+          </span>
+          <div class="flex items-center gap-2 text-[9.5px] font-semibold">
+            <span class="flex items-center gap-1 text-slate-400"><span class="w-2 h-2 rounded-sm bg-slate-500 inline-block"></span> In</span>
+            <span class="flex items-center gap-1 text-amber-300"><span class="w-2 h-2 rounded-sm bg-amber-400 inline-block"></span> Out</span>
+            <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-sm bg-rose-500 inline-block"></span> GR</span>
+          </div>
+        </div>
+        <div class="relative h-28 w-full bg-[#090a0d] rounded border border-[#26221b] overflow-hidden">
+          <canvas id="scopeCanvas" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. STATE & FACTORY PRESETS
+    // =========================================================================
+    const state = {
+      thresholdDbv: 0.0,
+      releaseSec: 0.25,
+      rangeDb: 60.0,
+      outputDbv: 0.0,
+      detSource: 0,
+      mode: 2,
+      detType: 2,
+      dryWetMix: 100.0,
+      stereoLink: true,
+      abBypass: false,
+      skin: 'original',
+      sourceLoop: 'drums',
+      isPlaying: false,
+      showAnalyzer: true,
+
+      currentGrDb: 0.0,
+      currentInDb: -100.0,
+      currentOutDb: -100.0,
+      currentDetDb: -100.0,
+      clipHoldFrames: 0
+    };
+
+    const PRESETS = [
+      { name: "Default (Classic Level Limiter)", thresholdDbv: 0.0,   releaseSec: 0.25, rangeDb: 60.0, outputDbv: 0.0,  detSource: 0, mode: 2, detType: 2, dryWetMix: 100, loop: 'drums' },
+      { name: "Drum Bus Slam (Parallel Crush)",  thresholdDbv: -18.0, releaseSec: 0.10, rangeDb: 60.0, outputDbv: 2.0,  detSource: 0, mode: 2, detType: 1, dryWetMix: 55,  loop: 'drums' },
+      { name: "Snare Crack (3-Zone Limiting)",   thresholdDbv: -16.0, releaseSec: 0.08, rangeDb: 16.0, outputDbv: 3.5,  detSource: 0, mode: 2, detType: 2, dryWetMix: 100, loop: 'snare_tom' },
+      { name: "Fast Tom Gate (Set & Forget)",    thresholdDbv: -12.0, releaseSec: 0.18, rangeDb: 45.0, outputDbv: 0.0,  detSource: 0, mode: 0, detType: 1, dryWetMix: 100, loop: 'snare_tom' },
+      { name: "Vocal De-Esser (DS-FM AVG)",      thresholdDbv: -10.0, releaseSec: 0.09, rangeDb: 18.0, outputDbv: 0.0,  detSource: 1, mode: 2, detType: 2, dryWetMix: 100, loop: 'vocal_deess' },
+      { name: "Weird Organ Limiter (-20:1)",     thresholdDbv: -12.0, releaseSec: 0.35, rangeDb: 24.0, outputDbv: 2.0,  detSource: 0, mode: 2, detType: 0, dryWetMix: 100, loop: 'synth_sidechain' },
+      { name: "Output Overdrive",                thresholdDbv: 20.0,  releaseSec: 0.25, rangeDb: 60.0, outputDbv: 13.0, detSource: 0, mode: 1, detType: 2, dryWetMix: 100, loop: 'bass' },
+      { name: "Sidechain Synth Keying (EXT)",    thresholdDbv: -14.0, releaseSec: 0.16, rangeDb: 40.0, outputDbv: 0.0,  detSource: 2, mode: 0, detType: 0, dryWetMix: 100, loop: 'synth_sidechain' },
+      { name: "Sidechain Pad Ducking (EXT)",     thresholdDbv: -18.0, releaseSec: 0.22, rangeDb: 18.0, outputDbv: 0.0,  detSource: 2, mode: 2, detType: 2, dryWetMix: 100, loop: 'synth_sidechain' }
+    ];
+
+    // =========================================================================
+    // 2. DSP ENGINE
+    // =========================================================================
+    function dbToLinear(db) {
+      return Math.pow(10.0, db * 0.05);
+    }
+
+    function linearToDb(lin) {
+      return 20.0 * Math.log10(Math.max(lin, 1e-6));
+    }
+
+    function computeTargetGainReductionDb(detectorDbFs, p) {
+      if (p.mode === 1) return 0.0;
+
+      const thresholdDbFs = Math.max(-60.0, Math.min(0.0, p.thresholdDbv - 20.0));
+      const maxRangeDb = Math.max(0.0, Math.min(60.0, p.rangeDb));
+      if (maxRangeDb <= 0.0001) return 0.0;
+
+      let targetGrDb = 0.0;
+
+      if (p.mode === 2) {
+        const overshootDb = detectorDbFs - thresholdDbFs;
+        if (overshootDb <= 0.0) return 0.0;
+
+        if (p.detSource === 2) {
+          targetGrDb = (p.detType === 0)
+            ? Math.min(maxRangeDb, overshootDb * 20.0)
+            : Math.min(maxRangeDb, overshootDb * 1.0);
+        } else {
+          if (p.detType === 0) {
+            targetGrDb = Math.min(maxRangeDb, overshootDb * 21.0);
+          } else {
+            targetGrDb = Math.min(maxRangeDb, overshootDb);
+          }
+        }
+      } else if (p.mode === 0) {
+        if (p.detSource === 2) {
+          const overshootDb = detectorDbFs - thresholdDbFs;
+          if (overshootDb <= 0.0) {
+            targetGrDb = maxRangeDb;
+          } else if (p.detType === 0) {
+            targetGrDb = Math.max(0.0, maxRangeDb - overshootDb * 20.0);
+          } else {
+            targetGrDb = Math.max(0.0, maxRangeDb - overshootDb * 1.0);
+          }
+        } else {
+          const undershootDb = thresholdDbFs - detectorDbFs;
+          if (undershootDb <= 0.0) return 0.0;
+
+          targetGrDb = (p.detType === 0)
+            ? Math.min(maxRangeDb, undershootDb * 19.0)
+            : Math.min(maxRangeDb, undershootDb * 1.0);
+        }
+      }
+
+      return Math.max(0.0, Math.min(maxRangeDb, targetGrDb));
+    }
+
+    function getInteractiveModeDescription(p) {
+      if (p.mode === 1) {
+        return {
+          text: "OUT (BYPASS): VCA bypassed. Output knob & analog stage clipping remain active (crank Output for Overdrive).",
+          ratio: "1 : 1",
+          makeupDb: 0.0
+        };
+      }
+
+      const thresholdDbFs = Math.max(-60.0, Math.min(0.0, p.thresholdDbv - 20.0));
+      const makeupDb = (p.mode === 2 && p.detSource !== 2)
+        ? Math.min(-thresholdDbFs * 0.65, p.rangeDb * 0.75)
+        : 0.0;
+
+      if (p.mode === 2) {
+        if (p.detSource === 0) {
+          if (p.detType === 2) return { text: "LEVEL LIMITING (INT / LIMIT / AVG): Inf:1 with Linear Integration (1–15 ms attack) & Auto Make-Up.", ratio: "Inf : 1", makeupDb };
+          if (p.detType === 1) return { text: "PEAK LIMITING (INT / LIMIT / PEAK): Fast 50 µs attack Inf:1 limiter with Auto Make-Up & ARC release.", ratio: "Inf : 1", makeupDb };
+          return { text: "WEIRD NEGATIVE LIMITING (INT / LIMIT / GATE): 1:-20 negative ratio! 1 dB over Threshold drops output by 20 dB.", ratio: "1 : -20", makeupDb };
+        }
+        if (p.detSource === 1) {
+          if (p.detType === 2) return { text: "VOCAL DE-ESSING (DS-FM / LIMIT / AVG): HF pre-emphasis limiter. Ignores 't' transients, clamps 'sss'.", ratio: "Inf : 1 HF", makeupDb };
+          if (p.detType === 1) return { text: "HF PEAK LIMITING (DS-FM / LIMIT / PEAK): Fast 50 µs HF-weighted limiter for cymbals & hi-hats.", ratio: "Inf : 1 HF", makeupDb };
+          return { text: "MODIFIED NEGATIVE LIMITING (DS-FM / LIMIT / GATE): 1:-20 negative ratio triggered by HF.", ratio: "1 : -20 HF", makeupDb };
+        }
+        if (p.detType === 2) return { text: "INVERSE ENVELOPE FOLLOWER (EXT / LIMIT / AVG): Smooth 1:1 sidechain ducking bounded by Range.", ratio: "1 : 1 Duck", makeupDb: 0.0 };
+        if (p.detType === 1) return { text: "FAST DUCKING (EXT / LIMIT / PEAK): Fast 50 µs 1:1 sidechain ducking.", ratio: "1 : 1 Duck", makeupDb: 0.0 };
+        return { text: "HARD DUCKING (EXT / LIMIT / GATE): Extreme 20:1 sidechain ducking bounded by Range.", ratio: "20 : 1 Duck", makeupDb: 0.0 };
+      }
+
+      if (p.detSource === 2) {
+        if (p.detType === 2) return { text: "SOFT KEYING (EXT / EXP / AVG): Smooth 1:1 sidechain envelope keyer.", ratio: "1 : 1 Key", makeupDb: 0.0 };
+        if (p.detType === 1) return { text: "FAST SOFT KEYING (EXT / EXP / PEAK): Fast 50 µs 1:1 sidechain keyer.", ratio: "1 : 1 Key", makeupDb: 0.0 };
+        return { text: "HARD KEYING (EXT / EXP / GATE): Tight 20:1 sidechain gate with 50 µs attack.", ratio: "20 : 1 Key", makeupDb: 0.0 };
+      }
+
+      const srcLabel = (p.detSource === 1) ? "DS-FM" : "INT";
+      if (p.detType === 2) return { text: `SOFT NOISE GATING (${srcLabel} / EXP / AVG): Smooth 1:2 downward expander with ARC release.`, ratio: "1 : 2 Exp", makeupDb: 0.0 };
+      if (p.detType === 1) return { text: `FAST EXPANDER (${srcLabel} / EXP / PEAK): 1:2 downward expander (50 µs attack) for toms & snare.`, ratio: "1 : 2 Exp", makeupDb: 0.0 };
+      return { text: `HARD NOISE GATE (${srcLabel} / EXP / GATE): Aggressive 1:20 gate (50 µs attack) with ARC release.`, ratio: "1 : 20 Gate", makeupDb: 0.0 };
+    }
+
+    // =========================================================================
+    // 3. WEB AUDIO API REAL-TIME SYNTHESIS & DSP
+    // =========================================================================
+    let audioCtx = null;
+    let scriptNode = null;
+    let sampleCounter = 0;
+
+    const dspState = {
+      hpZ1: 0, hpZ2: 0,
+      hsZ1: 0, hsZ2: 0,
+      linIntEnv: 0,
+      fastPeak: 0,
+      fastGrDb: 0,
+      slowGrDb: 0,
+      smoothedGrDb: 0,
+      holdSamples: 0,
+      hpCoeffs: { b0: 1, b1: 0, b2: 0, a1: 0, a2: 0 },
+      hsCoeffs: { b0: 1, b1: 0, b2: 0, a1: 0, a2: 0 }
+    };
+
+    const SCOPE_LEN = 300;
+    const scopeInHistory = new Float32Array(SCOPE_LEN);
+    const scopeOutHistory = new Float32Array(SCOPE_LEN);
+    const scopeGrHistory = new Float32Array(SCOPE_LEN);
+    let scopeWriteIdx = 0;
+
+    function initBiquads(sr) {
+      {
+        const w0 = 2 * Math.PI * 750 / sr;
+        const cosw = Math.cos(w0), sinw = Math.sin(w0);
+        const alpha = sinw / (2 * 0.7071);
+        const a0 = 1 + alpha;
+        dspState.hpCoeffs = {
+          b0: ((1 + cosw) * 0.5) / a0,
+          b1: (-(1 + cosw)) / a0,
+          b2: ((1 + cosw) * 0.5) / a0,
+          a1: (-2 * cosw) / a0,
+          a2: (1 - alpha) / a0
+        };
+      }
+      {
+        const A = Math.pow(10, 12.5 / 40);
+        const w0 = 2 * Math.PI * 2400 / sr;
+        const cosw = Math.cos(w0), sinw = Math.sin(w0);
+        const alpha = sinw / (2 * 0.7071);
+        const twoSqrtAAlpha = 2 * Math.sqrt(A) * alpha;
+        const a0 = (A + 1) - (A - 1) * cosw + twoSqrtAAlpha;
+        dspState.hsCoeffs = {
+          b0: (A * ((A + 1) + (A - 1) * cosw + twoSqrtAAlpha)) / a0,
+          b1: (-2 * A * ((A - 1) + (A + 1) * cosw)) / a0,
+          b2: (A * ((A + 1) + (A - 1) * cosw - twoSqrtAAlpha)) / a0,
+          a1: (2 * ((A - 1) - (A + 1) * cosw)) / a0,
+          a2: ((A + 1) - (A - 1) * cosw - twoSqrtAAlpha) / a0
+        };
+      }
+    }
+
+    function processBiquad(x, c, z1Key, z2Key) {
+      const out = c.b0 * x + dspState[z1Key];
+      dspState[z1Key] = c.b1 * x - c.a1 * out + dspState[z2Key];
+      dspState[z2Key] = c.b2 * x - c.a2 * out;
+      return out;
+    }
+
+    function synthesizeStudioSource(n, sr, modeName) {
+      const t = n / sr;
+      const bpm = 116.0;
+      const beatSec = 60.0 / bpm;
+      const step16 = (t / (beatSec * 0.25));
+      const stepIdx = Math.floor(step16) % 16;
+      const stepFrac = (step16 % 1.0) * (beatSec * 0.25);
+
+      const noise = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+      const white = (noise - Math.floor(noise)) * 2.0 - 1.0;
+
+      const kickEnv = (stepIdx % 4 === 0) ? Math.exp(-stepFrac * 26.0) : 0.0;
+      const kickFreq = 52.0 + 130.0 * Math.exp(-stepFrac * 55.0);
+      const kickSig = Math.sin(2 * Math.PI * kickFreq * stepFrac) * kickEnv * 0.85;
+
+      if (modeName === 'drums') {
+        const isSnare = (stepIdx === 4 || stepIdx === 12);
+        const isGhost = (stepIdx === 15);
+        const snareEnv = isSnare ? Math.exp(-stepFrac * 18.0) : (isGhost ? 0.35 * Math.exp(-stepFrac * 24.0) : 0.0);
+        const snareBody = Math.sin(2 * Math.PI * 185.0 * stepFrac) * Math.exp(-stepFrac * 32.0);
+        const snareSnap = white * snareEnv * 0.75;
+        const hatEnv = Math.exp(-stepFrac * (stepIdx % 2 === 0 ? 45.0 : 80.0));
+        const hatSig = white * hatEnv * 0.22;
+        const room = white * 0.035 * (kickEnv + snareEnv);
+        const main = Math.max(-0.98, Math.min(0.98, kickSig + (snareBody * 0.5 + snareSnap) + hatSig + room));
+        return [main, kickSig];
+      }
+
+      if (modeName === 'snare_tom') {
+        const hitStep = Math.floor(t / (beatSec * 0.5)) % 4;
+        const hitTime = (t % (beatSec * 0.5));
+        const bodyFreq = (hitStep === 0) ? 190.0 : (hitStep === 1 ? 135.0 : (hitStep === 2 ? 105.0 : 82.0));
+        const hitEnv = Math.exp(-hitTime * 11.5);
+        const transientClick = Math.exp(-hitTime * 140.0) * white * 0.65;
+        const tomTone = Math.sin(2 * Math.PI * (bodyFreq + 60.0 * Math.exp(-hitTime * 40.0)) * hitTime) * hitEnv * 0.85;
+        const bleed = white * 0.025 + Math.sin(2 * Math.PI * 60.0 * t) * 0.015;
+        return [tomTone + transientClick + bleed, kickSig];
+      }
+
+      if (modeName === 'bass') {
+        const notes = [55.0, 55.0, 110.0, 82.4, 65.4, 73.4, 82.4, 98.0];
+        const f0 = notes[stepIdx % 8];
+        const env = Math.exp(-stepFrac * 9.5);
+        const slapPop = Math.exp(-stepFrac * 95.0) * Math.sin(2 * Math.PI * f0 * 6.0 * stepFrac) * 0.55;
+        const bassWave = (Math.sin(2 * Math.PI * f0 * t) + 0.45 * Math.sin(2 * Math.PI * f0 * 2 * t) + 0.2 * Math.sin(2 * Math.PI * f0 * 3 * t)) * env * 0.55;
+        return [bassWave + slapPop, kickSig];
+      }
+
+      if (modeName === 'vocal_deess') {
+        const phrasePhase = stepIdx % 4;
+        if (phrasePhase === 1) {
+          const sibEnv = Math.sin(Math.min(1.0, stepFrac / 0.12) * Math.PI);
+          const sibilant = (Math.sin(2 * Math.PI * 6800 * t) * 0.45 + Math.sin(2 * Math.PI * 8100 * t) * 0.35) * sibEnv;
+          return [sibilant, kickSig];
+        } else {
+          const f0 = 220.0 + 4.0 * Math.sin(2 * Math.PI * 5.5 * t);
+          const vowel = (Math.sin(2 * Math.PI * f0 * t) * 0.45 + Math.sin(2 * Math.PI * f0 * 2 * t) * 0.25 + Math.sin(2 * Math.PI * f0 * 3 * t) * 0.12) * 0.7;
+          return [vowel, kickSig];
+        }
+      }
+
+      const freqs = [110.0, 164.81, 196.0, 261.63, 329.63];
+      let pad = 0.0;
+      for (let i = 0; i < freqs.length; i++) {
+        pad += Math.sin(2 * Math.PI * freqs[i] * t + i) * 0.14;
+      }
+      return [pad, kickSig];
+    }
+
+    function startOrStopAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        initBiquads(audioCtx.sampleRate);
+
+        scriptNode = audioCtx.createScriptProcessor(1024, 0, 2);
+        scriptNode.onaudioprocess = function (e) {
+          const outL = e.outputBuffer.getChannelData(0);
+          const outR = e.outputBuffer.getChannelData(1);
+          const sr = audioCtx.sampleRate;
+          const N = outL.length;
+
+          if (!state.isPlaying) {
+            for (let i = 0; i < N; i++) { outL[i] = 0; outR[i] = 0; }
+            return;
+          }
+
+          const tauPeakAtk = 0.000050 / 2.302585;
+          const peakAtkCoeff = Math.exp(-1.0 / (sr * tauPeakAtk));
+          const avgMinAtkCoeff = Math.exp(-1.0 / (sr * 0.0012));
+          const avgMaxAtkCoeff = Math.exp(-1.0 / (sr * 0.0120));
+
+          const relSec = Math.max(0.05, Math.min(5.0, state.releaseSec));
+          const tauRel = relSec / 2.302585;
+          const fastRelCoeff = Math.exp(-1.0 / (sr * tauRel));
+          const slowArcRelCoeff = Math.exp(-1.0 / (sr * (tauRel * 3.8)));
+          const holdPeriod = sr * 0.006;
+
+          const thresholdDbFs = Math.max(-60.0, Math.min(0.0, state.thresholdDbv - 20.0));
+          const autoMakeUpDb = (state.mode === 2 && state.detSource !== 2)
+            ? Math.min(-thresholdDbFs * 0.65, state.rangeDb * 0.75)
+            : 0.0;
+          const outputGainLin = dbToLinear(state.outputDbv + autoMakeUpDb);
+          const dryWet = Math.max(0.0, Math.min(1.0, state.dryWetMix * 0.01));
+
+          let maxGr = 0.0, maxIn = 1e-6, maxOut = 1e-6, maxDet = 1e-6;
+          let blockClipped = false;
+
+          for (let i = 0; i < N; i++) {
+            const [rawIn, scIn] = synthesizeStudioSource(sampleCounter++, sr, state.sourceLoop);
+
+            if (state.abBypass) {
+              outL[i] = rawIn;
+              outR[i] = rawIn;
+              maxIn = Math.max(maxIn, Math.abs(rawIn));
+              maxOut = maxIn;
+              continue;
+            }
+
+            let detSig = rawIn;
+            if (state.detSource === 2) {
+              detSig = scIn;
+            } else if (state.detSource === 1) {
+              const hp = processBiquad(rawIn, dspState.hpCoeffs, 'hpZ1', 'hpZ2');
+              detSig = processBiquad(hp, dspState.hsCoeffs, 'hsZ1', 'hsZ2');
+            }
+
+            const absDet = Math.abs(detSig);
+            let detectedLin = absDet;
+
+            if (state.detType === 2) {
+              dspState.fastPeak = Math.max(absDet, dspState.fastPeak * 0.999);
+              const crest = (dspState.linIntEnv > 1e-5)
+                ? Math.max(1.0, Math.min(8.0, dspState.fastPeak / (dspState.linIntEnv + 1e-5)))
+                : 4.0;
+              const blend = (crest - 1.0) / 7.0;
+              const atkC = avgMinAtkCoeff + blend * (avgMaxAtkCoeff - avgMinAtkCoeff);
+              if (absDet > dspState.linIntEnv) {
+                dspState.linIntEnv = atkC * dspState.linIntEnv + (1.0 - atkC) * absDet;
+              } else {
+                dspState.linIntEnv = fastRelCoeff * dspState.linIntEnv + (1.0 - fastRelCoeff) * absDet;
+              }
+              detectedLin = dspState.linIntEnv;
+            }
+
+            maxDet = Math.max(maxDet, detectedLin);
+            const detDbFs = linearToDb(detectedLin);
+            const rawTargetGrDb = computeTargetGainReductionDb(detDbFs, state);
+
+            const activeAtkCoeff = (state.detType === 2) ? avgMinAtkCoeff : peakAtkCoeff;
+            const isIncreasingAtten = (rawTargetGrDb > dspState.smoothedGrDb);
+            const isAttack = (state.mode === 0) ? (!isIncreasingAtten) : isIncreasingAtten;
+
+            if (isAttack) {
+              dspState.fastGrDb = activeAtkCoeff * dspState.fastGrDb + (1.0 - activeAtkCoeff) * rawTargetGrDb;
+              dspState.slowGrDb = 0.9985 * dspState.slowGrDb + 0.0015 * dspState.fastGrDb;
+              dspState.smoothedGrDb = dspState.fastGrDb;
+              dspState.holdSamples = holdPeriod;
+            } else {
+              if (dspState.holdSamples > 0) {
+                dspState.holdSamples -= 1.0;
+              } else {
+                dspState.fastGrDb = fastRelCoeff * dspState.fastGrDb + (1.0 - fastRelCoeff) * rawTargetGrDb;
+                dspState.slowGrDb = slowArcRelCoeff * dspState.slowGrDb + (1.0 - slowArcRelCoeff) * rawTargetGrDb;
+                const sustainW = Math.max(0.0, Math.min(0.75, dspState.slowGrDb / 24.0));
+                dspState.smoothedGrDb = (1.0 - sustainW) * dspState.fastGrDb + sustainW * dspState.slowGrDb;
+              }
+            }
+
+            const grDb = Math.max(0.0, Math.min(60.0, dspState.smoothedGrDb));
+            maxGr = Math.max(maxGr, grDb);
+
+            const vcaGain = (state.mode === 1) ? 1.0 : dbToLinear(-grDb);
+            let x = rawIn * vcaGain * outputGainLin;
+
+            const vcaDrive = 0.0008 + 0.00015 * Math.min(grDb, 30.0);
+            let vcaOut = x + vcaDrive * (x * x * x - 0.15 * x * x);
+
+            const absVal = Math.abs(vcaOut);
+            if (absVal >= 0.985) blockClipped = true;
+
+            if (absVal > 0.90) {
+              const sign = vcaOut >= 0 ? 1.0 : -1.0;
+              const excess = absVal - 0.90;
+              const headroom = vcaOut >= 0 ? 0.16 : 0.14;
+              vcaOut = sign * (0.90 + headroom * Math.tanh(excess / headroom));
+            }
+
+            const finalSample = rawIn * (1.0 - dryWet) + vcaOut * dryWet;
+            outL[i] = finalSample;
+            outR[i] = finalSample;
+
+            maxIn = Math.max(maxIn, Math.abs(rawIn));
+            maxOut = Math.max(maxOut, Math.abs(finalSample));
+
+            if (i % 128 === 0) {
+              scopeInHistory[scopeWriteIdx] = Math.abs(rawIn);
+              scopeOutHistory[scopeWriteIdx] = Math.abs(finalSample);
+              scopeGrHistory[scopeWriteIdx] = grDb;
+              scopeWriteIdx = (scopeWriteIdx + 1) % SCOPE_LEN;
+            }
+          }
+
+          state.currentGrDb = maxGr;
+          state.currentInDb = linearToDb(maxIn);
+          state.currentOutDb = linearToDb(maxOut);
+          state.currentDetDb = linearToDb(maxDet);
+          if (blockClipped) state.clipHoldFrames = 22;
+        };
+
+        scriptNode.connect(audioCtx.destination);
+      }
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      state.isPlaying = !state.isPlaying;
+      const btn = document.getElementById('playStopBtn');
+      const icon = document.getElementById('playIcon');
+      const txt = document.getElementById('playBtnText');
+
+      if (state.isPlaying) {
+        btn.className = "flex items-center gap-1.5 px-2.5 py-1 rounded font-bold text-[11px] tracking-wide bg-rose-600 hover:bg-rose-500 text-white shadow transition";
+        icon.textContent = "■";
+        txt.textContent = "STOP AUDIO";
+      } else {
+        btn.className = "flex items-center gap-1.5 px-2.5 py-1 rounded font-bold text-[11px] tracking-wide bg-emerald-600 hover:bg-emerald-500 text-white shadow transition";
+        icon.textContent = "▶";
+        txt.textContent = "PLAY TEST AUDIO";
+        state.currentGrDb = 0;
+        state.currentOutDb = -100;
+      }
+    }
+
+    // =========================================================================
+    // 4. COMPACT 7-LOBE FLUTED BAKELITE KNOB RENDERER (Exact look from image_383e11.png)
+    // =========================================================================
+    const KNOB_CONFIGS = {
+      knobThreshold: {
+        paramKey: 'thresholdDbv',
+        inputId: 'inputThresholdVal',
+        min: -40, max: 20, step: 0.5, defaultVal: 0.0,
+        labels: ['-40', '-30', '-20', '-10', '0', '+10', '+20'],
+        logScale: false
+      },
+      knobRelease: {
+        paramKey: 'releaseSec',
+        inputId: 'inputReleaseVal',
+        min: 0.05, max: 5.0, step: 0.01, defaultVal: 0.25,
+        labels: ['.05', '.1', '.2', '.5', '1', '2', '5'],
+        logScale: true
+      },
+      knobRange: {
+        paramKey: 'rangeDb',
+        inputId: 'inputRangeVal',
+        min: 0, max: 60, step: 0.5, defaultVal: 60.0,
+        labels: ['0', '10', '20', '30', '40', '50', '60'],
+        logScale: false
+      },
+      knobOutput: {
+        paramKey: 'outputDbv',
+        inputId: 'inputOutputVal',
+        min: -15, max: 15, step: 0.5, defaultVal: 0.0,
+        labels: ['-15', '-10', '-5', '0', '+5', '+10', '+15'],
+        logScale: false
+      },
+      knobMix: {
+        paramKey: 'dryWetMix',
+        inputId: 'inputMixVal',
+        min: 0, max: 100, step: 1, defaultVal: 100.0,
+        labels: ['0', '20', '40', '60', '80', '100'],
+        logScale: false
+      }
+    };
+
+    function valueToNorm(val, cfg) {
+      const clamped = Math.max(cfg.min, Math.min(cfg.max, val));
+      if (cfg.logScale) {
+        return Math.log(clamped / cfg.min) / Math.log(cfg.max / cfg.min);
+      }
+      return (clamped - cfg.min) / (cfg.max - cfg.min);
+    }
+
+    function normToValue(norm, cfg) {
+      const n = Math.max(0, Math.min(1, norm));
+      if (cfg.logScale) {
+        return cfg.min * Math.pow(cfg.max / cfg.min, n);
+      }
+      return cfg.min + n * (cfg.max - cfg.min);
+    }
+
+    function drawBakeliteKnob(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const cfg = KNOB_CONFIGS[canvasId];
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const cx = w * 0.5, cy = h * 0.53;
+      const radius = Math.min(w, h) * 0.28;
+
+      const startAngle = -Math.PI * 0.75;
+      const endAngle = Math.PI * 0.75;
+      const norm = valueToNorm(state[cfg.paramKey], cfg);
+      const angle = startAngle + norm * (endAngle - startAngle);
+
+      // Minor ticks
+      ctx.strokeStyle = '#75664c';
+      ctx.lineWidth = 1.0;
+      for (let i = 0; i <= 20; i++) {
+        const a = startAngle + (i / 20) * (endAngle - startAngle);
+        const r1 = radius + 2;
+        const r2 = radius + 4.2;
+        ctx.beginPath();
+        ctx.moveTo(cx + r1 * Math.sin(a), cy - r1 * Math.cos(a));
+        ctx.lineTo(cx + r2 * Math.sin(a), cy - r2 * Math.cos(a));
+        ctx.stroke();
+      }
+
+      // Major ticks & compact scale labels
+      const labels = cfg.labels;
+      ctx.fillStyle = '#efe1c1';
+      ctx.strokeStyle = '#efe1c1';
+      ctx.lineWidth = 1.4;
+      ctx.font = 'bold 8px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (let i = 0; i < labels.length; i++) {
+        const a = startAngle + (i / (labels.length - 1)) * (endAngle - startAngle);
+        const r1 = radius + 2;
+        const r2 = radius + 5.5;
+        const rText = radius + 12.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + r1 * Math.sin(a), cy - r1 * Math.cos(a));
+        ctx.lineTo(cx + r2 * Math.sin(a), cy - r2 * Math.cos(a));
+        ctx.stroke();
+        ctx.fillText(labels[i], cx + rText * Math.sin(a), cy - rText * Math.cos(a));
+      }
+
+      // Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, radius + 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Brushed silver skirt
+      const skirtGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+      skirtGrad.addColorStop(0, '#c8ccd4');
+      skirtGrad.addColorStop(0.5, '#7e838c');
+      skirtGrad.addColorStop(1, '#3d4047');
+      ctx.fillStyle = skirtGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7-lobe fluted Bakelite grip
+      const bodyR = radius * 0.84;
+      ctx.beginPath();
+      const steps = 72;
+      for (let i = 0; i <= steps; i++) {
+        const theta = (i / steps) * Math.PI * 2;
+        const flute = 1.0 + 0.055 * Math.cos(7.0 * (theta - angle));
+        const r = bodyR * flute;
+        const px = cx + r * Math.sin(theta);
+        const py = cy - r * Math.cos(theta);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+
+      const bodyGrad = ctx.createLinearGradient(cx - bodyR, cy - bodyR, cx + bodyR, cy + bodyR);
+      bodyGrad.addColorStop(0, '#3c4049');
+      bodyGrad.addColorStop(0.55, '#1b1d22');
+      bodyGrad.addColorStop(1, '#0c0d10');
+      ctx.fillStyle = bodyGrad;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(130, 138, 155, 0.45)';
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      // Inner cap
+      const capR = bodyR * 0.66;
+      ctx.fillStyle = '#181a1f';
+      ctx.beginPath();
+      ctx.arc(cx, cy, capR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pointer line
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = '#f7e7c4';
+      ctx.beginPath();
+      ctx.roundRect(-1.6, -radius + 1.0, 3.2, radius * 0.68, 1.4);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function setupKnobEvents(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const cfg = KNOB_CONFIGS[canvasId];
+      const inputEl = document.getElementById(cfg.inputId);
+
+      let dragging = false;
+      let startY = 0;
+      let startNorm = 0;
+
+      const updateVal = (newVal) => {
+        const clamped = Math.max(cfg.min, Math.min(cfg.max, newVal));
+        state[cfg.paramKey] = clamped;
+        inputEl.value = cfg.logScale ? clamped.toFixed(2) : clamped.toFixed(1);
+        drawBakeliteKnob(canvasId);
+        syncUiState();
+      };
+
+      canvas.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        startY = e.clientY;
+        startNorm = valueToNorm(state[cfg.paramKey], cfg);
+        canvas.setPointerCapture(e.pointerId);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const sensitivity = (e.ctrlKey || e.metaKey) ? 400.0 : 135.0;
+        const deltaNorm = (startY - e.clientY) / sensitivity;
+        updateVal(normToValue(startNorm + deltaNorm, cfg));
+      });
+
+      canvas.addEventListener('pointerup', () => { dragging = false; });
+      canvas.addEventListener('dblclick', () => { updateVal(cfg.defaultVal); });
+
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const curNorm = valueToNorm(state[cfg.paramKey], cfg);
+        const stepNorm = (e.ctrlKey || e.metaKey) ? 0.008 : 0.03;
+        const dir = e.deltaY < 0 ? 1 : -1;
+        updateVal(normToValue(curNorm + dir * stepNorm, cfg));
+      }, { passive: false });
+
+      inputEl.addEventListener('change', () => {
+        const parsed = parseFloat(inputEl.value);
+        if (!isNaN(parsed)) updateVal(parsed);
+      });
+    }
+
+    // =========================================================================
+    // 5. LED ARRAYS, SWITCHES & ANALYZER
+    // =========================================================================
+    const GR_THRESHOLDS = [1, 2, 4, 6, 10, 15, 20, 40];
+    const OUT_THRESHOLDS = [-30, -18, -12, -6, -3, 0];
+
+    function buildLedMeters() {
+      const grContainer = document.getElementById('grLedContainer');
+      grContainer.innerHTML = '';
+      GR_THRESHOLDS.forEach((db, idx) => {
+        const col = document.createElement('div');
+        col.className = 'flex flex-col items-center';
+        const seg = document.createElement('div');
+        seg.id = `grLed_${idx}`;
+        seg.className = 'led-segment w-3.5 h-2.5 rounded-sm bg-[#23272e] border border-black/60';
+        const lbl = document.createElement('span');
+        lbl.className = 'mono text-[8px] font-bold text-[#c9b998] mt-0.5';
+        lbl.textContent = db;
+        col.appendChild(seg);
+        col.appendChild(lbl);
+        grContainer.appendChild(col);
+      });
+
+      const outContainer = document.getElementById('outLedContainer');
+      outContainer.innerHTML = '';
+      OUT_THRESHOLDS.forEach((db, idx) => {
+        const col = document.createElement('div');
+        col.className = 'flex flex-col items-center';
+        const seg = document.createElement('div');
+        seg.id = `outLed_${idx}`;
+        seg.className = 'led-segment w-3 h-2.5 rounded-sm bg-[#23272e] border border-black/60';
+        const lbl = document.createElement('span');
+        lbl.className = 'mono text-[8px] font-bold text-[#c9b998] mt-0.5';
+        lbl.textContent = db;
+        col.appendChild(seg);
+        col.appendChild(lbl);
+        outContainer.appendChild(col);
+      });
+    }
+
+    function syncUiState() {
+      const posOffsets = ['2px', '27px', '52px'];
+      document.getElementById('thumbDetSource').style.top = posOffsets[state.detSource];
+      document.getElementById('thumbMode').style.top = posOffsets[state.mode];
+      document.getElementById('thumbDetType').style.top = posOffsets[state.detType];
+
+      document.querySelectorAll('.sw-label').forEach((btn) => {
+        const sw = btn.getAttribute('data-sw');
+        const pos = parseInt(btn.getAttribute('data-pos'), 10);
+        const isAct = (state[sw] === pos);
+        btn.className = isAct
+          ? 'sw-label text-left text-[#ffcf70] font-extrabold transition'
+          : 'sw-label text-left text-[#8c7e65] hover:text-[#d4c3a1] transition';
+      });
+
+      document.getElementById('btnSlamFast').classList.toggle('active', state.detType === 1);
+      document.getElementById('btnSlamSlow').classList.toggle('active', state.detType === 2);
+      document.getElementById('btnGateHard').classList.toggle('active', state.detType === 0);
+      document.getElementById('btnGateFastExp').classList.toggle('active', state.detType === 1);
+      document.getElementById('btnGateSlowExp').classList.toggle('active', state.detType === 2);
+      document.getElementById('btnHfBoost').classList.toggle('active', state.detSource === 1);
+      document.getElementById('btnExtSc').classList.toggle('active', state.detSource === 2);
+
+      const info = getInteractiveModeDescription(state);
+      document.getElementById('interactiveGuideText').textContent = info.text;
+      document.getElementById('activeRatioReadout').textContent = info.ratio;
+      document.getElementById('autoMakeupReadout').textContent = `+${info.makeupDb.toFixed(1)} dB`;
+
+      Object.keys(KNOB_CONFIGS).forEach((id) => {
+        const cfg = KNOB_CONFIGS[id];
+        document.getElementById(cfg.inputId).value = cfg.logScale
+          ? state[cfg.paramKey].toFixed(2)
+          : state[cfg.paramKey].toFixed(1);
+        drawBakeliteKnob(id);
+      });
+
+      drawTransferCurve();
+    }
+
+    function setSkinMode(skin) {
+      state.skin = skin;
+      document.querySelectorAll('.skin-tab-btn').forEach((btn) => {
+        const active = btn.getAttribute('data-skin') === skin;
+        btn.className = active
+          ? 'skin-tab-btn px-2 py-0.5 rounded text-[10px] font-bold bg-[#9e8456] text-[#0c0d10] transition'
+          : 'skin-tab-btn px-2 py-0.5 rounded text-[10px] font-bold text-[#c2b293] hover:text-white transition';
+      });
+
+      const origPanel = document.getElementById('originalSwitchesPanel');
+      const sgPanel = document.getElementById('slamGateButtonsPanel');
+      const slamAtk = document.getElementById('slamAttackButtons');
+      const gateRat = document.getElementById('gateRatioButtons');
+      const rangeWrap = document.getElementById('rangeKnobWrapper');
+      const badge = document.getElementById('skinBadgeLabel');
+      const thTitle = document.getElementById('knobThresholdTitle');
+
+      if (skin === 'original') {
+        origPanel.classList.remove('hidden');
+        origPanel.classList.add('flex');
+        sgPanel.classList.add('hidden');
+        sgPanel.classList.remove('flex');
+        rangeWrap.classList.remove('opacity-30', 'pointer-events-none');
+        badge.textContent = 'CORE 18';
+        thTitle.textContent = 'THRESHOLD';
+      } else if (skin === 'slam') {
+        origPanel.classList.add('hidden');
+        origPanel.classList.remove('flex');
+        sgPanel.classList.remove('hidden');
+        sgPanel.classList.add('flex');
+        slamAtk.classList.remove('hidden');
+        slamAtk.classList.add('grid');
+        gateRat.classList.add('hidden');
+        gateRat.classList.remove('grid');
+        document.getElementById('slamGateSubheader').textContent = 'SLAM — ATTACK & DETECTOR';
+        rangeWrap.classList.add('opacity-30', 'pointer-events-none');
+        state.mode = 2;
+        if (state.detType === 0) state.detType = 1;
+        badge.textContent = 'SLAM MODE';
+        thTitle.textContent = 'COMPRESSION';
+      } else {
+        origPanel.classList.add('hidden');
+        origPanel.classList.remove('flex');
+        sgPanel.classList.remove('hidden');
+        sgPanel.classList.add('flex');
+        slamAtk.classList.add('hidden');
+        slamAtk.classList.remove('grid');
+        gateRat.classList.remove('hidden');
+        gateRat.classList.add('grid');
+        document.getElementById('slamGateSubheader').textContent = 'GATE — EXPANSION SLOPE';
+        rangeWrap.classList.remove('opacity-30', 'pointer-events-none');
+        state.mode = 0;
+        badge.textContent = 'GATE MODE';
+        thTitle.textContent = 'THRESHOLD';
+      }
+
+      syncUiState();
+    }
+
+    function drawTransferCurve() {
+      const canvas = document.getElementById('transferCurveCanvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (canvas.width !== rect.width || canvas.height !== rect.height) {
+        canvas.width = rect.width || 280;
+        canvas.height = rect.height || 112;
+      }
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const padL = 26, padR = 8, padT = 8, padB = 16;
+      const pw = w - padL - padR;
+      const ph = h - padT - padB;
+
+      const dbToX = (db) => padL + ((db + 60.0) / 60.0) * pw;
+      const dbToY = (db) => padT + (1.0 - (db + 60.0) / 60.0) * ph;
+
+      ctx.strokeStyle = '#1d2028';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#756850';
+      ctx.font = '8px JetBrains Mono, monospace';
+      [-60, -40, -20, 0].forEach((db) => {
+        const x = dbToX(db), y = dbToY(db);
+        ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + ph); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + pw, y); ctx.stroke();
+        ctx.fillText(`${db}`, 2, y + 3);
+        ctx.fillText(`${db}`, x - 8, h - 3);
+      });
+
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = '#404552';
+      ctx.beginPath();
+      ctx.moveTo(dbToX(-60), dbToY(-60));
+      ctx.lineTo(dbToX(0), dbToY(0));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const thDbFs = Math.max(-60.0, Math.min(0.0, state.thresholdDbv - 20.0));
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.beginPath();
+      ctx.moveTo(dbToX(thDbFs), padT);
+      ctx.lineTo(dbToX(thDbFs), padT + ph);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f0b429';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const inDb = -60.0 + (i / 100.0) * 60.0;
+        const grDb = computeTargetGainReductionDb(inDb, state);
+        const outDb = Math.max(-60.0, Math.min(0.0, inDb - grDb));
+        const px = dbToX(inDb), py = dbToY(outDb);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      if (state.isPlaying && state.currentDetDb > -60.0) {
+        const curIn = Math.max(-60.0, Math.min(0.0, state.currentDetDb));
+        const curGr = computeTargetGainReductionDb(curIn, state);
+        const curOut = Math.max(-60.0, Math.min(0.0, curIn - curGr));
+        ctx.fillStyle = '#ff4238';
+        ctx.beginPath();
+        ctx.arc(dbToX(curIn), dbToY(curOut), 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    let displayedGrDb = 0.0;
+    let displayedOutDb = -100.0;
+
+    function animateMetersAndScope() {
+      if (state.currentGrDb > displayedGrDb) displayedGrDb = state.currentGrDb;
+      else displayedGrDb = displayedGrDb * 0.82 + state.currentGrDb * 0.18;
+
+      if (state.currentOutDb > displayedOutDb) displayedOutDb = state.currentOutDb;
+      else displayedOutDb = displayedOutDb * 0.85 + state.currentOutDb * 0.15;
+
+      GR_THRESHOLDS.forEach((th, idx) => {
+        const el = document.getElementById(`grLed_${idx}`);
+        if (!el) return;
+        const lit = displayedGrDb >= th;
+        if (lit) {
+          const col = idx < 4 ? '#5ad442' : (idx < 6 ? '#f5b82e' : '#ff3b30');
+          el.style.backgroundColor = col;
+          el.style.boxShadow = `0 0 8px ${col}`;
+        } else {
+          el.style.backgroundColor = '#1c1f26';
+          el.style.boxShadow = 'none';
+        }
+      });
+
+      OUT_THRESHOLDS.forEach((th, idx) => {
+        const el = document.getElementById(`outLed_${idx}`);
+        if (!el) return;
+        const lit = displayedOutDb >= th;
+        if (lit) {
+          const col = idx < 4 ? '#42c966' : (idx === 4 ? '#f5b82e' : '#ff3b30');
+          el.style.backgroundColor = col;
+          el.style.boxShadow = `0 0 6px ${col}`;
+        } else {
+          el.style.backgroundColor = '#1c1f26';
+          el.style.boxShadow = 'none';
+        }
+      });
+
+      document.getElementById('grNumericReadout').textContent = `-${displayedGrDb.toFixed(1)} dB`;
+      document.getElementById('outNumericReadout').textContent = displayedOutDb > -70
+        ? `${displayedOutDb.toFixed(1)} dB`
+        : '-∞ dB';
+
+      const clipCircle = document.getElementById('clipLedCircle');
+      if (state.clipHoldFrames > 0) {
+        state.clipHoldFrames--;
+        clipCircle.style.backgroundColor = '#ff2a1f';
+        clipCircle.style.boxShadow = '0 0 12px #ff2a1f';
+      } else {
+        clipCircle.style.backgroundColor = '#3d1210';
+        clipCircle.style.boxShadow = 'none';
+      }
+
+      const thDbFs = state.thresholdDbv - 20.0;
+      const badge = document.getElementById('zoneStatusBadge');
+      if (state.mode === 1) {
+        badge.textContent = 'BYPASS (OUT ACTIVE)';
+        badge.className = 'text-[9.5px] mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-300';
+      } else if (displayedGrDb >= state.rangeDb - 0.5 && state.rangeDb < 59.5) {
+        badge.textContent = 'ZONE 3: RANGE CLAMP';
+        badge.className = 'text-[9.5px] mono font-bold px-1.5 py-0.2 rounded bg-rose-950 text-rose-300';
+      } else if (displayedGrDb > 0.5) {
+        badge.textContent = state.mode === 2 ? 'ZONE 2: LIMITING' : 'ZONE 2: GATING';
+        badge.className = 'text-[9.5px] mono font-bold px-1.5 py-0.2 rounded bg-amber-950 text-amber-300';
+      } else {
+        badge.textContent = `ZONE 1: LINEAR (${thDbFs.toFixed(0)} dB)`;
+        badge.className = 'text-[9.5px] mono font-bold px-1.5 py-0.2 rounded bg-[#1f242d] text-emerald-400';
+      }
+
+      if (state.showAnalyzer) {
+        const scopeCanvas = document.getElementById('scopeCanvas');
+        if (scopeCanvas) {
+          const rect = scopeCanvas.getBoundingClientRect();
+          if (scopeCanvas.width !== rect.width || scopeCanvas.height !== rect.height) {
+            scopeCanvas.width = rect.width || 400;
+            scopeCanvas.height = rect.height || 112;
+          }
+          const sctx = scopeCanvas.getContext('2d');
+          const sw = scopeCanvas.width, sh = scopeCanvas.height;
+          sctx.clearRect(0, 0, sw, sh);
+
+          sctx.fillStyle = 'rgba(100, 116, 139, 0.28)';
+          sctx.beginPath();
+          sctx.moveTo(0, sh);
+          for (let i = 0; i < SCOPE_LEN; i++) {
+            const idx = (scopeWriteIdx + i) % SCOPE_LEN;
+            const x = (i / (SCOPE_LEN - 1)) * sw;
+            const y = sh - Math.min(1.0, scopeInHistory[idx]) * (sh - 12);
+            sctx.lineTo(x, y);
+          }
+          sctx.lineTo(sw, sh);
+          sctx.closePath();
+          sctx.fill();
+
+          sctx.strokeStyle = '#fbbf24';
+          sctx.lineWidth = 1.4;
+          sctx.beginPath();
+          for (let i = 0; i < SCOPE_LEN; i++) {
+            const idx = (scopeWriteIdx + i) % SCOPE_LEN;
+            const x = (i / (SCOPE_LEN - 1)) * sw;
+            const y = sh - Math.min(1.0, scopeOutHistory[idx]) * (sh - 12);
+            if (i === 0) sctx.moveTo(x, y);
+            else sctx.lineTo(x, y);
+          }
+          sctx.stroke();
+
+          sctx.strokeStyle = '#f43f5e';
+          sctx.lineWidth = 1.8;
+          sctx.beginPath();
+          for (let i = 0; i < SCOPE_LEN; i++) {
+            const idx = (scopeWriteIdx + i) % SCOPE_LEN;
+            const x = (i / (SCOPE_LEN - 1)) * sw;
+            const y = 4 + (Math.min(40.0, scopeGrHistory[idx]) / 40.0) * (sh - 10);
+            if (i === 0) sctx.moveTo(x, y);
+            else sctx.lineTo(x, y);
+          }
+          sctx.stroke();
+        }
+
+        if (state.isPlaying) {
+          drawTransferCurve();
+        }
+      }
+
+      requestAnimationFrame(animateMetersAndScope);
+    }
+
+    // =========================================================================
+    // 6. INITIALIZATION & EVENT LISTENERS
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      buildLedMeters();
+
+      Object.keys(KNOB_CONFIGS).forEach((id) => {
+        setupKnobEvents(id);
+        drawBakeliteKnob(id);
+      });
+
+      const setupThreeWaySwitch = (slotId, stateKey) => {
+        const slot = document.getElementById(slotId);
+        slot.addEventListener('click', (e) => {
+          const rect = slot.getBoundingClientRect();
+          const relY = e.clientY - rect.top;
+          const idx = Math.max(0, Math.min(2, Math.floor((relY / rect.height) * 3)));
+          state[stateKey] = idx;
+          syncUiState();
+        });
+        slot.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const dir = e.deltaY > 0 ? 1 : -1;
+          state[stateKey] = Math.max(0, Math.min(2, state[stateKey] + dir));
+          syncUiState();
+        }, { passive: false });
+      };
+
+      setupThreeWaySwitch('swDetSource', 'detSource');
+      setupThreeWaySwitch('swMode', 'mode');
+      setupThreeWaySwitch('swDetType', 'detType');
+
+      document.querySelectorAll('.sw-label').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const sw = btn.getAttribute('data-sw');
+          const pos = parseInt(btn.getAttribute('data-pos'), 10);
+          state[sw] = pos;
+          syncUiState();
+        });
+      });
+
+      document.getElementById('btnSlamFast').addEventListener('click', () => { state.detType = 1; syncUiState(); });
+      document.getElementById('btnSlamSlow').addEventListener('click', () => { state.detType = 2; syncUiState(); });
+      document.getElementById('btnGateHard').addEventListener('click', () => { state.detType = 0; syncUiState(); });
+      document.getElementById('btnGateFastExp').addEventListener('click', () => { state.detType = 1; syncUiState(); });
+      document.getElementById('btnGateSlowExp').addEventListener('click', () => { state.detType = 2; syncUiState(); });
+      document.getElementById('btnHfBoost').addEventListener('click', () => {
+        state.detSource = (state.detSource === 1) ? 0 : 1;
+        syncUiState();
+      });
+      document.getElementById('btnExtSc').addEventListener('click', () => {
+        state.detSource = (state.detSource === 2) ? 0 : 2;
+        syncUiState();
+      });
+
+      document.querySelectorAll('.skin-tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setSkinMode(btn.getAttribute('data-skin'));
+        });
+      });
+
+      document.getElementById('playStopBtn').addEventListener('click', startOrStopAudio);
+
+      document.getElementById('sourceLoopSelect').addEventListener('change', (e) => {
+        state.sourceLoop = e.target.value;
+      });
+
+      document.getElementById('abBypassBtn').addEventListener('click', (e) => {
+        state.abBypass = !state.abBypass;
+        e.currentTarget.textContent = state.abBypass ? 'A/B: BYPASS (DRY)' : 'A/B: ACTIVE';
+        e.currentTarget.className = state.abBypass
+          ? 'px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-rose-500 bg-rose-950/60 text-rose-200 transition'
+          : 'px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-[#59492f] bg-[#1c1f26] text-[#d6c6a5] hover:border-[#b89b67] transition';
+      });
+
+      document.getElementById('stereoCoupleBtn').addEventListener('click', (e) => {
+        state.stereoLink = !state.stereoLink;
+        e.currentTarget.textContent = state.stereoLink ? '🔗 STEREO LINK' : '🔗 DUAL MONO';
+        e.currentTarget.className = state.stereoLink
+          ? 'mt-1 w-full py-0.5 px-1 rounded text-[8.5px] font-bold tracking-wider uppercase bg-[#2b2418] text-[#f3c66f] border border-[#8a7147] truncate'
+          : 'mt-1 w-full py-0.5 px-1 rounded text-[8.5px] font-bold tracking-wider uppercase bg-[#181a20] text-slate-400 border border-slate-700 truncate';
+      });
+
+      document.getElementById('clipBezel').addEventListener('click', () => {
+        state.clipHoldFrames = 0;
+      });
+
+      document.getElementById('presetSelect').addEventListener('change', (e) => {
+        const p = PRESETS[parseInt(e.target.value, 10)];
+        if (!p) return;
+        state.thresholdDbv = p.thresholdDbv;
+        state.releaseSec = p.releaseSec;
+        state.rangeDb = p.rangeDb;
+        state.outputDbv = p.outputDbv;
+        state.detSource = p.detSource;
+        state.mode = p.mode;
+        state.detType = p.detType;
+        state.dryWetMix = p.dryWetMix;
+        state.sourceLoop = p.loop;
+        document.getElementById('sourceLoopSelect').value = p.loop;
+        syncUiState();
+      });
+
+      // Live Custom Rebranding & Author Inputs
+      const syncBrandAndAuthor = () => {
+        const b = document.getElementById('brandNameInput').value.trim() || 'VULKAN AUDIO';
+        const m = document.getElementById('modelNameInput').value.trim() || 'NITRO-430';
+        const a = document.getElementById('authorNameInput').value.trim() || 'My Custom Audio Lab';
+        document.getElementById('brandNameDisplay').textContent = b;
+        document.getElementById('modelNameDisplay').textContent = m;
+        document.getElementById('aboutBrandTitle').textContent = b;
+        document.getElementById('aboutModelTitle').textContent = m;
+        document.getElementById('aboutAuthorDisplay').textContent = a;
+      };
+
+      document.getElementById('brandNameInput').addEventListener('input', syncBrandAndAuthor);
+      document.getElementById('modelNameInput').addEventListener('input', syncBrandAndAuthor);
+      document.getElementById('authorNameInput').addEventListener('input', syncBrandAndAuthor);
+
+      // Clickable Title -> About Modal
+      const aboutModal = document.getElementById('aboutModalOverlay');
+      document.getElementById('titleBrandBtn').addEventListener('click', () => {
+        aboutModal.classList.remove('hidden');
+      });
+      document.getElementById('closeAboutModalBtn').addEventListener('click', () => {
+        aboutModal.classList.add('hidden');
+      });
+      aboutModal.addEventListener('click', (e) => {
+        if (e.target === aboutModal) aboutModal.classList.add('hidden');
+      });
+
+      // Toggle Analyzer Drawer
+      document.getElementById('toggleScopeBtn').addEventListener('click', () => {
+        state.showAnalyzer = !state.showAnalyzer;
+        const sec = document.getElementById('analyzerSection');
+        sec.classList.toggle('hidden', !state.showAnalyzer);
+        if (state.showAnalyzer) drawTransferCurve();
+      });
+
+      window.addEventListener('resize', () => {
+        drawTransferCurve();
+      });
+
+      syncUiState();
+      requestAnimationFrame(animateMetersAndScope);
+    });
+  </script>
+</body>
+</html>

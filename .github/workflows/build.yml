@@ -1,0 +1,60 @@
+name: Build VST3 & AU (Windows + macOS)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows x64 (VST3 + Standalone)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake (MSVC x64)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build VST3 & Standalone
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload Windows VST3 & Standalone Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VulkanAudio-NITRO-430-Windows-x64-VST3
+          path: |
+            build/VulkanNitro430_artefacts/Release/VST3/**
+            build/VulkanNitro430_artefacts/Release/Standalone/**
+
+  build-macos:
+    name: macOS Universal (VST3 + AU + Standalone)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake (Universal Binary arm64 + x86_64)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build VST3, AU & Standalone
+        run: cmake --build build --config Release --parallel
+
+      - name: Ad-Hoc Codesign Bundles (Required for Apple Silicon DAWs)
+        run: |
+          codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3"
+          codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component"
+
+      - name: Upload macOS VST3 & AU Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VulkanAudio-NITRO-430-macOS-Universal-VST3-AU
+          path: |
+            build/VulkanNitro430_artefacts/Release/VST3/**
+            build/VulkanNitro430_artefacts/Release/AU/**
+            build/VulkanNitro430_artefacts/Release/Standalone/**

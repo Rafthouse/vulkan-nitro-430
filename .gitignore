@@ -1,0 +1,15 @@
+# CMake & Build Artifacts
+build/
+cmake-build-*/
+out/
+*_artefacts/
+JuceLibraryCode/
+
+# IDE & OS files
+.vscode/
+.idea/
+*.VC.db
+*.sln
+*.vcxproj*
+.DS_Store
+Thumbs.db
