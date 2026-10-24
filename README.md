@@ -1,101 +1,71 @@
-# Збірка VST3 / AU (Windows & macOS) та Git-деплой для VULKAN AUDIO NITRO-430
+# Vulkan Audio NITRO-430
 
-Цей проєкт повністю підготовлений як для **хмарної автоматичної збірки через GitHub Actions** (одночасно під Windows x64 та macOS Universal Binary без потреби мати два фізичні комп'ютери), так і для **локальної компіляції через CMake**.
+**Компактний VCA-динамічний процесор (компресор / лімітер / гейт)** у форматі 1U half-rack — апаратно точна модель TA-101 VCA. Формати: **VST3, AU (AudioUnit), Standalone** для Windows та macOS (Universal Binary: Apple Silicon M1–M4 + Intel).
 
-## 1. Структура репозиторію
+Автор: **Mykyta Shchur**
 
-| Файл / Директорія | Призначення |
-| :--- | :--- |
-| `CMakeLists.txt` | Кросплатформний конфіг CMake (автоматично завантажує JUCE 8.0.4 через `FetchContent`, компілює VST3, AU та Standalone) |
-| `src/ValleyPeopleDynaMite.cpp` | Повний C++17 / JUCE рушій (TA-101 VCA, Linear Integration, 3-Zone Range, ARC, скін та вікно About за кліком на назву) |
-| `web/valley_people_dynamite.html` | Інтерактивний Web Audio API + Canvas прототип для браузера |
-| `.github/workflows/build.yml` | CI/CD пайплайн GitHub Actions, який при кожному `git push` збирає інсталяційні бандли `.vst3`, `.component` (AU) та `.exe`/`.app` |
+---
 
-## 2. Як вписати своє ім'я автора перед комітом
+## ⬇️ Завантажити та встановити
 
-Ти можеш задати своє ім'я автора, бренд та назву моделі одним із двох способів:
+Оберіть файл під свою систему:
 
-1. **Прямо у `CMakeLists.txt` (рядки 19–21)** або через прапорці CMake:
-   ```bash
-   cmake -B build -DPLUGIN_AUTHOR_NAME="Твоє Ім'я" -DPLUGIN_BRAND_TITLE="VULKAN AUDIO" -DPLUGIN_MODEL_TITLE="NITRO-430"
-   ```
-2. **У файлі `ValleyPeopleDynaMite.cpp` (рядки 27–38)**:
-   ```cpp
-   #define PLUGIN_BRAND_TITLE  "VULKAN AUDIO"
-   #define PLUGIN_MODEL_TITLE  "NITRO-430"
-   #define PLUGIN_AUTHOR_NAME  "Твоє Ім'я / Нікнейм"
-   ```
+### Windows (VST3 + Standalone)
 
-## 3. Швидкий Git-коміт і автоматична збірка Windows + Mac у GitHub Actions
+| Файл | Опис |
+|---|---|
+| [VulkanAudio-NITRO-430-Windows-Setup-x64.exe](https://github.com/Rafthouse/vulkan-nitro-430/releases/download/v1.0.0/VulkanAudio-NITRO-430-Windows-Setup-x64.exe) | Інсталятор — ставить VST3 у систему + Standalone-застосунок |
 
-Якщо розпакувати готовий архів `VulkanAudio_NITRO430_GitRepo.zip` (у ньому вже ініціалізовано `.git` і зроблено перший коміт) або покласти файли в папку проєкту, достатньо запушити їх у свій GitHub-репозиторій:
+1. Скачайте `.exe` і запустіть його.
+2. Інсталятор сам покладе VST3 у `C:\Program Files\Common Files\VST3\` і Standalone у `Program Files\Vulkan Audio\NITRO-430\`.
+3. Перезапустіть DAW (Reaper, Ableton, Cubase, FL Studio) — плагін з'явиться у списку VST3.
 
-```bash
-# Якщо створюєш репозиторій з нуля у своїй папці:
-git init -b main
-git add .
-git commit -m "feat: initial release of Vulkan Audio NITRO-430 (VST3/AU)"
+### macOS (VST3 + AU + Standalone)
 
-# Прив'язка до твого репозиторію на GitHub та пуш:
-git remote add origin https://github.com/<твій-юзернейм>/vulkan-nitro-430.git
-git push -u origin main
-```
+| Файл | Опис |
+|---|---|
+| [VulkanAudio-NITRO-430-macOS-Universal2.pkg](https://github.com/Rafthouse/vulkan-nitro-430/releases/download/v1.0.0/VulkanAudio-NITRO-430-macOS-Universal2.pkg) | Інсталятор — ставить VST3 + AU у системні папки |
+| [VulkanAudio-NITRO-430-macOS-Universal2.dmg](https://github.com/Rafthouse/vulkan-nitro-430/releases/download/v1.0.0/VulkanAudio-NITRO-430-macOS-Universal2.dmg) | Disk image — перетягніть плагіни вручну |
 
-Одразу після `git push` перейди у вкладку **Actions** свого репозиторію на GitHub:
-* Запустяться дві паралельні матриці: **Windows x64 (VST3 + Standalone)** та **macOS Universal (VST3 + AU + Standalone)**.
-* Через ~3–5 хвилин унизу сторінки білду з'являться два готові архіви в секції **Artifacts**:
-  * `VulkanAudio-NITRO-430-Windows-x64-VST3.zip` (містить `.vst3` та `.exe`)
-  * `VulkanAudio-NITRO-430-macOS-Universal-VST3-AU.zip` (містить Universal Binary `.vst3`, AudioUnit `.component` та `.app`, вже підписані ad-hoc підписом для Apple Silicon M1–M4).
+1. Скачайте `.pkg` (найпростіше) або `.dmg`.
+2. Для `.pkg`: двічі клацніть → Installer → далі.
+3. Для `.dmg`: відкрийте образ і перетягніть `.vst3` у `~/Library/Audio/Plug-Ins/VST3/`, а `.component` у `~/Library/Audio/Plug-Ins/Components/`.
+4. Перезапустіть DAW (Logic Pro, Ableton, Reaper, GarageBand).
 
-## 4. Локальна збірка на Windows (VST3 + Standalone)
+> **Перший запуск на macOS:** збірки підписані ad-hoc (без Apple Developer ID). Якщо Gatekeeper скаржиться — правий клік на файлі → **Відкрити**, або в терміналі: `xattr -cr /шлях/до/файлу`.
 
-### Необхідні інструменти
-* **Visual Studio 2022** (Community або вище) з компонентом **Desktop development with C++**
-* **CMake 3.22+** та **Git**
+---
 
-### Команди збірки (PowerShell або Developer Command Prompt)
-```powershell
-# 1. Конфігурація проєкту (CMake сам завантажить JUCE 8.0.4)
-cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+## 🎛️ Як користуватися (параметри)
 
-# 2. Компіляція у режимі Release
-cmake --build build --config Release --parallel
-```
+| Параметр | Діапазон | Що робить |
+|---|---|---|
+| **Threshold** | −40…+20 dB | Поріг спрацювання. Нижче = більше компресії |
+| **Release** | 0.05…5 s | Час відновлення після стиснення |
+| **Range** | 0…60 dB | Максимальна глибина ослаблення (для гейта — скільки зрізає) |
+| **Output** | −15…+15 dB | Вихідний рівень (make-up gain) |
+| **Detector Source** | INT / DS-FM / EXT | Джерело детектора: внутрішній, DS-FM (Dyna-Mite), зовнішній sidechain |
+| **Mode** | EXP / OUT / LIMIT | Режим: експандер, компресор-лімітер, жорсткий лімітер |
+| **Detector Type** | GATE / PEAK / AVG | Тип детектора: гейт, піковий, середній (RMS) |
+| **Dry / Wet Mix** | 0…100% | Баланс сухого/обробленого сигналу (паралельна компресія) |
+| **Stereo Link** | ON/OFF | Зв'язування каналів у стерео |
 
-### Де лежать готові плагіни на Windows та куди їх ставити
-* **Зібраний VST3**: `build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3`
-* **Системна папка VST3 для DAW (Reaper, Ableton, Cubase, FL Studio)**:
-  ```text
-  C:\Program Files\Common Files\VST3\
-  ```
+### Швидкі рецепти
 
-## 5. Локальна збірка на macOS (VST3 + AudioUnit AU + Standalone)
+- **Паралельна компресія на барабани:** Mode = LIMIT, Threshold ≈ −20 dB, Range ≈ 20 dB, Dry/Wet Mix ≈ 50%.
+- **Гейт для гітари/вокалу:** Mode = EXP, Detector Type = GATE, Threshold ≈ −40 dB, Range = 60 dB.
+- **М'яке вирівнювання майстра:** Mode = LIMIT, Detector Type = AVG, Release ≈ 0.5 s, Output для компенсації.
 
-### Необхідні інструменти
-* **Xcode** або **Xcode Command Line Tools** (`xcode-select --install`)
-* **CMake 3.22+** (`brew install cmake`) та **Git**
+---
 
-### Команди збірки (Terminal)
-```bash
-# 1. Конфігурація Universal Binary (Apple Silicon arm64 + Intel x86_64)
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+## 📦 Формати та вимоги
 
-# 2. Компіляція VST3, AU та Standalone
-cmake --build build --config Release --parallel
+- **Windows:** VST3 (x64) + Standalone, Windows 10/11.
+- **macOS:** VST3 + AU + Standalone, Universal Binary (arm64 + x86_64), macOS 11+.
+- **DAW:** будь-які з підтримкою VST3/AU — Reaper, Ableton Live, Logic Pro, Cubase, Studio One, FL Studio, GarageBand.
 
-# 3. Локальний ad-hoc підпис (обов'язково для macOS на чіпах M1/M2/M3/M4)
-codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3"
-codesign --force --deep --sign - "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component"
-```
+---
 
-### Куди скопіювати плагіни на macOS
-```bash
-# Встановлення VST3 (для Ableton, Reaper, Cubase, Studio One):
-cp -R "build/VulkanNitro430_artefacts/Release/VST3/Vulkan Audio NITRO-430.vst3" ~/Library/Audio/Plug-Ins/VST3/
+## 🔧 Збірка з вихідного коду
 
-# Встановлення AudioUnit AU (для Logic Pro, GarageBand, Ableton):
-cp -R "build/VulkanNitro430_artefacts/Release/AU/Vulkan Audio NITRO-430.component" ~/Library/Audio/Plug-Ins/Components/
-
-# Перевірка валідатором Apple AudioUnit (auval):
-auval -v aufx N430 Vulk
-```
+Повна інструкція зі збірки Windows/macOS та інсталяторів — у [BUILD.md](BUILD.md).
